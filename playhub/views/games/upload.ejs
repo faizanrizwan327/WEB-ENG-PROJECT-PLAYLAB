@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Game - PlayHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+        <div class="brand-icon"><i class="fas fa-gamepad"></i></div>
+        <span>PlayHub</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="/games"><i class="fas fa-th-large me-1"></i>Games</a></li>
+          <li class="nav-item"><a class="nav-link active" href="/games/upload"><i class="fas fa-cloud-upload-alt me-1"></i>Upload</a></li>
+        </ul>
+        <ul class="navbar-nav align-items-center">
+          <% if (typeof user !== 'undefined' && user) { %>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
+                <div class="avatar-sm"><%= user.username.charAt(0).toUpperCase() %></div>
+                <span><%= user.username %></span>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0">
+                <li><a class="dropdown-item" href="/auth/profile"><i class="fas fa-user me-2 text-primary"></i>Profile</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="/auth/logout"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+              </ul>
+            </li>
+          <% } else { %>
+            <li class="nav-item"><a class="nav-link" href="/auth/login">Login</a></li>
+            <li class="nav-item"><a class="btn btn-primary btn-sm ms-2" href="/auth/register">Register</a></li>
+          <% } %>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-grow-1 d-flex align-items-center py-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+          <div class="card shadow-lg border-0 overflow-hidden">
+            <div class="card-header-gradient p-4 text-center">
+              <div class="icon-circle mb-3 mx-auto"><i class="fas fa-cloud-upload-alt"></i></div>
+              <h3 class="text-white mb-1">Upload Your Game</h3>
+              <p class="text-white-50 mb-0">Share your creation with the community</p>
+            </div>
+            <div class="card-body p-5">
+              <% if (messages && messages.error && messages.error.length) { %>
+                <div class="alert alert-danger mb-4"><%= messages.error[0] %></div>
+              <% } %>
+              <% if (messages && messages.success && messages.success.length) { %>
+                <div class="alert alert-success mb-4"><%= messages.success[0] %></div>
+              <% } %>
+              <form action="/games/upload" method="POST" enctype="multipart/form-data" id="uploadForm">
+                <div class="mb-4">
+                  <label for="title" class="form-label"><i class="fas fa-heading me-2 text-primary"></i>Game Title <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control form-control-lg" id="title" name="title" required placeholder="e.g. Space Shooter">
+                </div>
+                <div class="mb-4">
+                  <label for="description" class="form-label"><i class="fas fa-align-left me-2 text-primary"></i>Description</label>
+                  <textarea class="form-control" id="description" name="description" rows="4" placeholder="Tell players what your game is about..."></textarea>
+                </div>
+                <div class="mb-4">
+                  <label class="form-label"><i class="fas fa-file-code me-2 text-primary"></i>Game File <span class="text-danger">*</span></label>
+                  <div class="dropzone" id="dropzone">
+                    <input type="file" class="d-none" id="gameFile" name="gameFile" accept=".html" required>
+                    <i class="fas fa-file-upload"></i>
+                    <p class="mb-1 fw-semibold">Drag & drop your HTML file here</p>
+                    <p class="text-muted mb-0">or click to browse</p>
+                    <div id="fileName" class="mt-2 fw-semibold text-primary d-none"></div>
+                  </div>
+                  <div class="form-text mt-2"><i class="fas fa-info-circle me-1"></i>Upload a complete, playable HTML game file.</div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg w-100" id="submitBtn">
+                  <i class="fas fa-rocket me-2"></i>Upload Game
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container text-center">
+      <p class="mb-0">&copy; 2026 PlayHub. All rights reserved. | Built for SE3542 Web Engineering</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('gameFile');
+    const fileNameDisplay = document.getElementById('fileName');
+
+    dropzone.addEventListener('click', () => fileInput.click());
+
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files.length) {
+        fileInput.files = files;
+        showFileName(files[0].name);
+      }
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) {
+        showFileName(fileInput.files[0].name);
+      }
+    });
+
+    function showFileName(name) {
+      fileNameDisplay.textContent = name;
+      fileNameDisplay.classList.remove('d-none');
+      dropzone.style.borderColor = 'var(--success)';
+      dropzone.style.background = '#ecfdf5';
+    }
+
+    document.getElementById('uploadForm').addEventListener('submit', function() {
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+    });
+  </script>
+</body>
+</html>
+
