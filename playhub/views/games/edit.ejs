@@ -72,6 +72,36 @@
                   <textarea class="form-control" id="description" name="description" rows="4" placeholder="Describe your game"><%= game.description || '' %></textarea>
                   <div class="form-text mt-2"><i class="fas fa-info-circle me-1"></i>Keep it concise and engaging.</div>
                 </div>
+                <div class="mb-4">
+                  <label for="category" class="form-label"><i class="fas fa-tag me-2 text-primary"></i>Category</label>
+                  <select class="form-control form-control-lg" id="category" name="category">
+                    <option value="Casual" <%= game.category === 'Casual' ? 'selected' : '' %>>Casual</option>
+                    <option value="Puzzle" <%= game.category === 'Puzzle' ? 'selected' : '' %>>Puzzle</option>
+                    <option value="Action" <%= game.category === 'Action' ? 'selected' : '' %>>Action</option>
+                    <option value="Adventure" <%= game.category === 'Adventure' ? 'selected' : '' %>>Adventure</option>
+                    <option value="Strategy" <%= game.category === 'Strategy' ? 'selected' : '' %>>Strategy</option>
+                    <option value="Educational" <%= game.category === 'Educational' ? 'selected' : '' %>>Educational</option>
+                  </select>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-4">
+                    <label for="difficulty" class="form-label"><i class="fas fa-signal me-2 text-primary"></i>Difficulty Level</label>
+                    <select class="form-control form-control-lg" id="difficulty" name="difficulty">
+                      <option value="Easy" <%= game.difficulty === 'Easy' ? 'selected' : '' %>>Easy</option>
+                      <option value="Medium" <%= game.difficulty === 'Medium' ? 'selected' : '' %>>Medium</option>
+                      <option value="Hard" <%= game.difficulty === 'Hard' ? 'selected' : '' %>>Hard</option>
+                      <option value="Extreme" <%= game.difficulty === 'Extreme' ? 'selected' : '' %>>Extreme</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-4">
+                    <label for="avgPlayTime" class="form-label"><i class="fas fa-clock me-2 text-primary"></i>Avg. Play Time (minutes)</label>
+                    <input type="number" class="form-control form-control-lg" id="avgPlayTime" name="avgPlayTime" value="<%= game.avgPlayTime || '' %>" min="1" placeholder="e.g. 15">
+                  </div>
+                </div>
+                <div class="mb-4">
+                  <label for="tags" class="form-label"><i class="fas fa-hashtag me-2 text-primary"></i>Tags (comma separated)</label>
+                  <input type="text" class="form-control form-control-lg" id="tags" name="tags" value="<%= game.tags ? game.tags.join(', ') : '' %>" placeholder="e.g. fun, challenging, 2D">
+                </div>
                 <div class="d-flex gap-3">
                   <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
                     <i class="fas fa-save me-2"></i>Save Changes
@@ -102,11 +132,13 @@
       const gameId = this.dataset.gameId;
       const title = document.getElementById('title').value;
       const description = document.getElementById('description').value;
+      const category = document.getElementById('category').value;
+      const tags = document.getElementById('tags').value;
       try {
         const response = await fetch(`/games/${gameId}/edit`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, description })
+          body: JSON.stringify({ title, description, category, tags })
         });
         if (response.ok) {
           window.location.href = `/games/${gameId}/play`;

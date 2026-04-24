@@ -29,6 +29,16 @@
           <% } %>
         </ul>
         <ul class="navbar-nav align-items-center">
+          <li class="nav-item">
+            <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">
+              <i class="fas fa-moon"></i>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="dark-mode-toggle" onclick="showShortcutsHelp()" title="Keyboard Shortcuts">
+              <i class="fas fa-keyboard"></i>
+            </button>
+          </li>
           <% if (typeof user !== 'undefined' && user) { %>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
@@ -94,8 +104,249 @@
 
       <!-- Game Frame -->
       <div class="game-frame-container">
+        <button class="fullscreen-btn" onclick="toggleFullscreen()" title="Fullscreen (F)">
+          <i class="fas fa-expand"></i> Fullscreen
+        </button>
         <iframe src="/games/<%= game.filePath %>" class="game-iframe" title="<%= game.title %>"></iframe>
       </div>
+
+      <!-- Game Action Bar -->
+      <div class="game-action-bar mt-4">
+        <button class="action-btn action-btn-secondary" onclick="copyGameLink()">
+          <i class="fas fa-link"></i> Copy Link
+        </button>
+        <div class="share-btn-group ms-auto">
+          <button class="share-btn share-twitter" onclick="shareTwitter()" title="Share on X">
+            <i class="fab fa-x-twitter"></i>
+          </button>
+          <button class="share-btn share-facebook" onclick="shareFacebook()" title="Share on Facebook">
+            <i class="fab fa-facebook-f"></i>
+          </button>
+          <button class="share-btn share-whatsapp" onclick="shareWhatsApp()" title="Share on WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+          </button>
+          <button class="share-btn share-native" onclick="shareNative()" title="Share">
+            <i class="fas fa-share-alt"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Game Metadata -->
+      <div class="game-metadata mb-4" style="display: flex; flex-wrap: wrap; gap: 1rem; padding: 1.5rem; background: rgba(99, 102, 241, 0.08); border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.1);">
+        <% if (game.category) { %>
+          <div class="metadata-item">
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Category</span>
+            <p class="mb-0" style="font-weight: 600; color: var(--primary);"><i class="fas fa-tag me-1"></i><%= game.category %></p>
+          </div>
+        <% } %>
+        <% if (game.difficulty) { %>
+          <div class="metadata-item">
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Difficulty</span>
+            <p class="mb-0" style="font-weight: 600; color: var(--warning);"><i class="fas fa-signal me-1"></i><%= game.difficulty %></p>
+          </div>
+        <% } %>
+        <% if (game.avgPlayTime) { %>
+          <div class="metadata-item">
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Avg. Play Time</span>
+            <p class="mb-0" style="font-weight: 600; color: var(--info);"><i class="fas fa-clock me-1"></i><%= game.avgPlayTime %> min</p>
+          </div>
+        <% } %>
+        <div class="metadata-item">
+          <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Uploaded</span>
+          <p class="mb-0" style="font-weight: 600; color: var(--text-secondary);"><i class="fas fa-calendar me-1"></i><%= new Date(game.createdAt).toLocaleDateString() %></p>
+        </div>
+      </div>
+
+      <!-- Game Stats -->
+      <div class="game-stats mt-5 mb-4">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-eye"></i></div>
+          <div>
+            <p class="stat-label">Views</p>
+            <p class="stat-value"><%= game.views %></p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-star"></i></div>
+          <div>
+            <p class="stat-label">Rating</p>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span class="rating-stars-display">
+                <% 
+                  const avgRating = game.avgRating ? Math.round(game.avgRating) : 0;
+                  for (let i = 1; i <= 5; i++) {
+                    if (i <= avgRating) {
+                      %>
+                      <i class="fas fa-star" style="color: #fbbf24; font-size: 0.95rem;"></i>
+                      <%
+                    } else {
+                      %>
+                      <i class="far fa-star" style="color: #ddd; font-size: 0.95rem;"></i>
+                      <% 
+                    }
+                  }
+                %>
+              </span>
+              <span class="stat-value"><%= game.avgRating ? game.avgRating.toFixed(1) : 'N/A' %></span>
+            </div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-comments"></i></div>
+          <div>
+            <p class="stat-label">Reviews</p>
+            <p class="stat-value"><%= game.ratingCount || 0 %></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rating Distribution -->
+      <% if (typeof ratings !== 'undefined' && ratings && ratings.length > 0) { %>
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-body">
+            <h5 class="mb-3"><i class="fas fa-chart-bar me-2 text-primary"></i>Rating Distribution</h5>
+            <div id="ratingDistribution"></div>
+          </div>
+        </div>
+        <script>
+          window.gameRatings = <%- JSON.stringify(ratings.map(r => ({ rating: r.rating }))) %>;
+        </script>
+      <% } %>
+
+      <!-- Rating & Favorite Section -->
+      <div class="row mt-5">
+        <!-- Rating Form -->
+        <div class="col-lg-6 mb-4">
+          <div class="card shadow-sm border-0">
+            <div class="card-header rating-card-header" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #000; padding: 1.25rem;">
+              <h5 class="mb-0" style="font-weight: 700; font-size: 1.15rem;"><i class="fas fa-star me-2"></i>Rate This Game</h5>
+            </div>
+            <div class="card-body">
+              <% if (typeof user !== 'undefined' && user) { %>
+                <div class="mb-4">
+                  <label class="form-label fw-600" style="font-size: 0.95rem; margin-bottom: 1rem; display: block;">Your Rating (Click Stars)</label>
+                  <div class="rating-stars-interactive">
+                    <% for (let i = 1; i <= 5; i++) { %>
+                      <span class="star-rating" data-rating="<%= i %>" style="font-size: 2.5rem; cursor: pointer; transition: all 0.2s ease;">
+                        <i class="far fa-star" style="color: #ddd;"></i>
+                      </span>
+                    <% } %>
+                  </div>
+                  <input type="hidden" id="ratingInput" value="0">
+                  <p class="text-muted small mt-2" style="font-size: 0.85rem;"><span id="ratingText">Select a rating</span></p>
+                </div>
+                <div class="mb-4">
+                  <label class="form-label fw-600" style="font-size: 0.95rem;">Review (Optional)</label>
+                  <textarea id="reviewInput" class="form-control" rows="3" placeholder="Share your thoughts about this game..." style="border-radius: 8px; border: 1px solid #ddd; padding: 0.75rem;"></textarea>
+                </div>
+                <button class="btn btn-primary w-100" onclick="submitRating('<%= game._id %>')" style="padding: 0.75rem 1.5rem; font-weight: 600;">
+                  <i class="fas fa-paper-plane me-2"></i>Submit Rating
+                </button>
+              <% } else { %>
+                <div style="padding: 2rem; text-align: center;">
+                  <i class="fas fa-lock" style="font-size: 2rem; color: var(--text-muted); margin-bottom: 1rem; display: block;"></i>
+                  <p class="text-muted"><a href="/auth/login" style="color: var(--primary); font-weight: 600;">Log in</a> to rate this game</p>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Favorite & Actions -->
+        <div class="col-lg-6 mb-4">
+          <div class="card shadow-sm border-0">
+            <div class="card-header" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1.25rem;">
+              <h5 class="mb-0" style="font-weight: 700; font-size: 1.15rem;"><i class="fas fa-heart me-2"></i>Actions</h5>
+            </div>
+            <div class="card-body">
+              <% if (typeof user !== 'undefined' && user) { %>
+                <button class="favorite-btn btn btn-lg w-100 mb-3 <%= (typeof isFavorited !== 'undefined' && isFavorited) ? 'favorited' : '' %>" onclick="toggleFavorite('<%= game._id %>')" style="padding: 0.75rem 1.5rem; font-weight: 600; border-radius: 8px; transition: all 0.3s ease;">
+                  <i class="fas fa-heart me-2"></i><%= (typeof isFavorited !== 'undefined' && isFavorited) ? 'Added to Favorites' : 'Add to Favorites' %>
+                </button>
+                <a href="/games/<%= game._id %>/edit" class="btn btn-outline-secondary w-100 d-none">
+                  <i class="fas fa-pen me-2"></i>Edit Game
+                </a>
+              <% } else { %>
+                <div style="padding: 2rem; text-align: center;">
+                  <i class="fas fa-lock" style="font-size: 2rem; color: var(--text-muted); margin-bottom: 1rem; display: block;"></i>
+                  <p class="text-muted"><a href="/auth/login" style="color: var(--primary); font-weight: 600;">Log in</a> to add favorites</p>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Ratings -->
+      <% if (typeof ratings !== 'undefined' && ratings && ratings.length > 0) { %>
+        <div class="mt-5">
+          <h4 class="mb-4" style="font-weight: 700; font-size: 1.3rem; padding: 1rem; background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.05)); border-radius: 8px; border-left: 4px solid #fbbf24;"><i class="fas fa-comments me-2" style="color: #fbbf24;"></i>User Reviews & Ratings (<%= ratings.length %>)</h4>
+          <div class="row">
+            <% ratings.slice(0, 6).forEach(rating => { %>
+              <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow-sm review-card" style="transition: all 0.3s ease; border-radius: 12px; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); overflow: hidden;">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                      <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                          <div class="avatar-review" style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--info)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">
+                            <%= rating.user ? rating.user.username.charAt(0).toUpperCase() : 'A' %>
+                          </div>
+                          <div>
+                            <p class="mb-0 fw-600" style="font-size: 0.95rem;">
+                              <%= rating.user ? rating.user.username : 'Anonymous' %>
+                            </p>
+                          </div>
+                        </div>
+                        <small class="text-muted" style="font-size: 0.8rem;">
+                          <%= new Date(rating.createdAt).toLocaleDateString() %>
+                        </small>
+                      </div>
+                      <div class="rating-badge" style="background: linear-gradient(135deg, #fbbf24, #f59e0b); padding: 0.5rem 0.8rem; border-radius: 8px; color: #000; font-weight: 700;">
+                        <% 
+                          for (let i = 1; i <= 5; i++) {
+                            if (i <= rating.rating) {
+                        %>
+                              <i class="fas fa-star" style="font-size: 0.8rem;"></i>
+                        <%
+                            } else {
+                        %>
+                              <i class="far fa-star" style="font-size: 0.8rem; opacity: 0.4;"></i>
+                        <%
+                            }
+                          }
+                        %>
+                        <span style="margin-left: 0.3rem; font-size: 0.85rem;"><%= rating.rating %>/5</span>
+                      </div>
+                    </div>
+                    <% if (rating.review) { %>
+                      <p class="card-text mb-0 text-secondary" style="font-size: 0.95rem; line-height: 1.6;">
+                        ​"<%= rating.review %>"
+                      </p>
+                    <% } else { %>
+                      <p class="card-text mb-0 text-muted" style="font-style: italic; font-size: 0.9rem;">
+                        No review provided
+                      </p>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+          <% if (ratings.length > 6) { %>
+            <div style="text-align: center; margin-top: 2rem;">
+              <button class="btn btn-outline-primary" onclick="expandReviews()" style="padding: 0.6rem 2rem; border-radius: 8px;">
+                <i class="fas fa-arrow-down me-2"></i>Load More Reviews (<%= ratings.length - 6 %> more)
+              </button>
+            </div>
+          <% } %>
+        </div>
+      <% } else { %>
+        <div style="text-align: center; padding: 3rem 2rem; margin-top: 3rem; background: rgba(99, 102, 241, 0.08); border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.1);">
+          <i class="fas fa-comments" style="font-size: 2rem; color: var(--text-muted); margin-bottom: 1rem; display: block; opacity: 0.5;"></i>
+          <p class="text-muted mb-0">No reviews yet. Be the first to rate this game!</p>
+        </div>
+      <% } %>
     </div>
   </main>
 
@@ -107,6 +358,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/js/main.js"></script>
+  <script src="/js/features.js"></script>
   <script>
     document.querySelectorAll('.delete-game-btn').forEach(btn => {
       btn.addEventListener('click', async function() {

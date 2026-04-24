@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Favorites - PlayHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+        <div class="brand-icon"><i class="fas fa-gamepad"></i></div>
+        <span>PlayHub</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="/games"><i class="fas fa-th-large me-1"></i>Games</a></li>
+          <li class="nav-item"><a class="nav-link active" href="/games/favorites"><i class="fas fa-heart me-1"></i>My Favorites</a></li>
+          <% if (user) { %>
+            <li class="nav-item"><a class="nav-link" href="/games/upload"><i class="fas fa-cloud-upload-alt me-1"></i>Upload</a></li>
+          <% } %>
+        </ul>
+        <ul class="navbar-nav align-items-center">
+          <% if (user) { %>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
+                <div class="avatar-sm"><%= user.username.charAt(0).toUpperCase() %></div>
+                <span><%= user.username %></span>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0">
+                <li><a class="dropdown-item" href="/auth/profile"><i class="fas fa-user me-2 text-primary"></i>Profile</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="/auth/logout"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+              </ul>
+            </li>
+          <% } else { %>
+            <li class="nav-item"><a class="nav-link" href="/auth/login">Login</a></li>
+            <li class="nav-item"><a class="btn btn-primary btn-sm ms-2" href="/auth/register">Register</a></li>
+          <% } %>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-grow-1">
+    <!-- Hero Header -->
+    <div class="hero" style="padding: 60px 0 50px;">
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col-lg-8">
+            <h1><i class="fas fa-heart me-3" style="color: #ff4757;"></i>My Favorite Games</h1>
+            <p class="lead mb-0">Your collection of favorite games from the PlayHub community.</p>
+          </div>
+          <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+            <a href="/games" class="btn btn-light btn-lg">
+              <i class="fas fa-search me-2"></i>Discover More
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container my-5">
+      <!-- Alerts -->
+      <% if (messages && messages.error && messages.error.length) { %>
+        <div class="alert alert-danger fade-in mb-4"><%= messages.error[0] %></div>
+      <% } %>
+      <% if (messages && messages.success && messages.success.length) { %>
+        <div class="alert alert-success fade-in mb-4"><%= messages.success[0] %></div>
+      <% } %>
+
+      <!-- Stats Card -->
+      <div class="card shadow-sm border-0 mb-4" style="background: linear-gradient(135deg, var(--primary), var(--info));">
+        <div class="card-body text-white">
+          <div class="row">
+            <div class="col-md-4 text-center">
+              <p class="mb-1" style="font-size: 2.5rem; font-weight: 800;"><%= favorites.length %></p>
+              <p class="mb-0"><i class="fas fa-heart me-2"></i>Favorite Games</p>
+            </div>
+            <div class="col-md-4 text-center border-start border-end">
+              <p class="mb-1" style="font-size: 2.5rem; font-weight: 800;">
+                <%= favorites.reduce((sum, fav) => sum + (fav.game ? fav.game.avgRating || 0 : 0), 0).toFixed(1) %>
+              </p>
+              <p class="mb-0"><i class="fas fa-star me-2"></i>Avg Rating</p>
+            </div>
+            <div class="col-md-4 text-center">
+              <p class="mb-1" style="font-size: 2.5rem; font-weight: 800;">
+                <%= favorites.reduce((sum, fav) => sum + (fav.game ? fav.game.views || 0 : 0), 0) %>
+              </p>
+              <p class="mb-0"><i class="fas fa-eye me-2"></i>Total Views</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <% if (favorites.length === 0) { %>
+        <div class="empty-state">
+          <div class="empty-state-icon"><i class="fas fa-heart-broken"></i></div>
+          <h3>No favorite games yet</h3>
+          <p>Start adding games to your favorites to see them here!</p>
+          <a href="/games" class="btn btn-primary btn-lg"><i class="fas fa-search me-2"></i>Browse Games</a>
+        </div>
+      <% } else { %>
+        <div class="row" id="favoritesGrid">
+          <% favorites.forEach((favorite, index) => { 
+            const game = favorite.game;
+            if (!game) return;
+          %>
+            <div class="col-md-6 col-lg-4 mb-4 game-item fade-in stagger-<%= (index % 6) + 1 %>">
+              <div class="card h-100 game-card position-relative">
+                <div class="game-thumbnail">
+                  <i class="fas fa-gamepad text-primary" style="opacity: 0.4;"></i>
+                  <div class="position-absolute top-0 end-0 p-2">
+                    <button class="btn btn-sm btn-danger" onclick="removeFavorite('<%= game._id %>')">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="card-body d-flex flex-column">
+                  <div class="game-meta">
+                    <i class="fas fa-user-circle"></i>
+                    <span><%= game.uploadedBy.username %></span>
+                    <span class="ms-auto"><i class="fas fa-star text-warning me-1"></i><%= game.avgRating ? game.avgRating.toFixed(1) : '0' %></span>
+                  </div>
+                  <h5 class="card-title"><%= game.title %></h5>
+                  <p class="card-text flex-grow-1 text-secondary"><%= game.description || 'No description available.' %></p>
+                  
+                  <!-- Game Stats -->
+                  <div class="py-2 mb-3">
+                    <small class="text-muted d-block"><i class="fas fa-eye me-1"></i><%= game.views %> views</small>
+                    <small class="text-muted d-block"><i class="fas fa-comments me-1"></i><%= game.ratingCount || 0 %> reviews</small>
+                  </div>
+
+                  <!-- Category Badge -->
+                  <% if (game.category) { %>
+                    <div class="mb-3">
+                      <span class="badge bg-info"><%= game.category %></span>
+                    </div>
+                  <% } %>
+
+                  <div class="mt-auto">
+                    <div class="btn-group-game">
+                      <a href="/games/<%= game._id %>/play" class="btn btn-primary">
+                        <i class="fas fa-play me-1"></i>Play
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container text-center">
+      <p class="mb-0">&copy; 2026 PlayHub. All rights reserved. | Built for SE3542 Web Engineering</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/features.js"></script>
+  <script>
+    async function removeFavorite(gameId) {
+      if (!confirm('Remove from favorites?')) return;
+      try {
+        const response = await fetch(`/games/${gameId}/favorite`, { method: 'POST' });
+        if (response.ok) {
+          location.reload();
+        }
+      } catch (err) {
+        alert('Error: ' + err);
+      }
+    }
+  </script>
+</body>
+</html>
